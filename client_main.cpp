@@ -25,20 +25,16 @@ using namespace folly;
 #define SERVER_PORT 9999
 class MyCallback : public RequestCallback{
 	public:
-		explicit MyCallback(folly::Baton<>* baton) : baton_(baton){ }
+		explicit MyCallback(){ }
 		void requestSent() override {
 			std::cout << "requestSend() has been called " << std::endl;
 		}
 		void replyReceived(ClientReceiveState&& state) override{
 			std::cout << "replyReceived() has been called "  << std::endl;
-			//baton_->post();
 		}
 		void requestError(ClientReceiveState&& state) override{
 			std::cout << "requestError() has been called " << std::endl;
-			//baton_->post();
 		}
-	private:
-		folly::Baton<>* baton_;
 };
 void MyEchoClient(){
 	EventBase evb;
@@ -48,12 +44,9 @@ void MyEchoClient(){
 	chan->setProtocolId(apache::thrift::protocol::T_COMPACT_PROTOCOL);
 	auto client = std::make_unique<EchoAsyncClient>(std::move(chan));
 	int message_len = 1024;
-	std::string message(1024,' ');
-	folly::Baton<> baton;
-	client->echo(std::make_unique<MyCallback>(&baton),message);
-	//auto cb = std::make_unique<MyCallback>(&baton);
-	//client->echo(std::move(cb),message);
-	//baton.wait();
+	std::string message(1024,' ');	
+	client->echo(std::make_unique<MyCallback>(),message);
+	evb.loop();
 }
 
 
